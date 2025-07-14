@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:open_file/open_file.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MainApp());
@@ -16,10 +17,16 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         body: Builder(
-          builder: (BuildContext context) => ElevatedButton(
-            onPressed: () => handleButtonPress(context),
-            child: const Text('PDF'),
-          ),
+          builder: (BuildContext context) => ChangeNotifierProvider(
+              create: (context) => InputModel(),
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () => handleButtonPress(context),
+                    child: const Text('PDF'),
+                  )
+                ],
+              )),
         ),
       ),
     );
@@ -64,5 +71,15 @@ class MainApp extends StatelessWidget {
     document.dispose();
 
     await OpenFile.open('example.pdf');
+  }
+}
+
+class InputModel extends ChangeNotifier {
+  String _material = "";
+
+  String get material => _material;
+  set material(String value) {
+    _material = value;
+    notifyListeners();
   }
 }
