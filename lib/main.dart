@@ -21,10 +21,16 @@ class MainApp extends StatelessWidget {
               create: (context) => InputModel(),
               child: Column(
                 children: [
-                  ElevatedButton(
-                    onPressed: () => handleButtonPress(context),
-                    child: const Text('PDF'),
-                  )
+                  Consumer<InputModel>(
+                      builder: (context, input, child) => TextFormField(
+                          initialValue: input.material,
+                          onChanged: (value) => input.material = value)),
+                  Consumer<InputModel>(
+                      builder: (context, input, child) => ElevatedButton(
+                            onPressed: () =>
+                                handleButtonPress(context, input.material),
+                            child: const Text('PDF'),
+                          ))
                 ],
               )),
         ),
@@ -32,7 +38,7 @@ class MainApp extends StatelessWidget {
     );
   }
 
-  Future<void> handleButtonPress(BuildContext context) async {
+  Future<void> handleButtonPress(BuildContext context, String text) async {
     final outputFile = File('example.pdf');
     if (outputFile.existsSync()) {
       try {
@@ -61,7 +67,6 @@ class MainApp extends StatelessWidget {
 
     page.graphics.drawPdfTemplate(template, const Offset(0, 0));
 
-    String text = "SP-8LKアオ(HGN11A)";
     final Size sizeOfText = font.measureString(text);
 
     page.graphics.drawString(text, font,

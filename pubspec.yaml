@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   open_file: ^3.5.4
+  provider: ^6.1.5
   syncfusion_flutter_pdf: ^28.2.6
 
 dev_dependencies:
