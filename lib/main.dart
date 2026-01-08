@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:slitter_app/screen/mini_label_print.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:open_file/open_file.dart';
 import 'package:provider/provider.dart';
@@ -13,30 +14,8 @@ class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Builder(
-          builder: (BuildContext context) => ChangeNotifierProvider(
-              create: (context) => InputModel(),
-              child: Column(
-                children: [
-                  Consumer<InputModel>(
-                      builder: (context, input, child) => TextFormField(
-                          initialValue: input.material,
-                          onChanged: (value) => input.material = value)),
-                  Consumer<InputModel>(
-                      builder: (context, input, child) => ElevatedButton(
-                            onPressed: () =>
-                                handleButtonPress(context, input.material),
-                            child: const Text('PDF'),
-                          ))
-                ],
-              )),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      const MaterialApp(home: MiniLabelPrint());
 
   Future<void> handleButtonPress(BuildContext context, String text) async {
     final outputFile = File('example.pdf');
@@ -86,5 +65,26 @@ class InputModel extends ChangeNotifier {
   set material(String value) {
     _material = value;
     notifyListeners();
+  }
+}
+
+class MaterialDropDownMenu extends StatelessWidget {
+  static const _materials = ['SP-8LKアオ(HGN11A)', 'SP-8Kアオ(HGN7)', 'SP-8Eアイボリー'];
+
+  const MaterialDropDownMenu({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final entries =
+        _materials.map((m) => DropdownMenuEntry(value: m, label: m)).toList();
+    return Consumer<InputModel>(builder: (context, value, child) {
+      return DropdownMenu(
+        label: const Text('品名'),
+        initialSelection: null,
+        requestFocusOnTap: false,
+        dropdownMenuEntries: entries,
+        onSelected: (value) => print,
+      );
+    });
   }
 }
