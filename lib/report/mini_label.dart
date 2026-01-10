@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:open_file/open_file.dart';
 import 'package:slitter_app/model/mini_label_request.dart';
+import 'package:slitter_app/report/pdf_report.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
@@ -12,6 +13,57 @@ import 'package:path/path.dart' as p;
 const _sizes = (page: Size(728.490, 515.9052), label: Size(164.0, 143.28));
 const _offsets =
     (firstLabel: Offset(32.0, 40.0), packingForm: Offset(0.0, 120.0));
+
+const _pageWidth = 728.490;
+const _pageHeight = 515.9052;
+const _baseFontSize = 9.0;
+
+typedef _LayoutConfig = ({
+  Size page,
+  ElementLayout label,
+});
+
+typedef _LabelLayoutConfig = ({
+  TextElementLayout productName,
+  TextElementLayout productWidth,
+  TextElementLayout baseNumber,
+  TextElementLayout packingForm,
+});
+
+const _LayoutConfig _layoutConfig = (
+  page: Size(_pageWidth, _pageHeight),
+  label: (
+    offset: Offset(32.0, 40.0),
+    size: Size(164.0, 143.28),
+  ),
+);
+
+const _LabelLayoutConfig _labelLayoutConfig = (
+  productName: (
+    offset: Offset(0.0, 50.0),
+    size: Size(_pageWidth, 0.0),
+    alignment: Alignment.center,
+    fontSize: _baseFontSize
+  ),
+  productWidth: (
+    offset: Offset(52.0, 71.0),
+    size: Size(30, 0.0),
+    alignment: Alignment.right,
+    fontSize: _baseFontSize
+  ),
+  baseNumber: (
+    offset: Offset(76.0, 89.0),
+    size: Size(30, 0.0),
+    alignment: Alignment.left,
+    fontSize: _baseFontSize
+  ),
+  packingForm: (
+    offset: Offset(0.0, 120.0),
+    size: Size(_pageWidth, 0.0),
+    alignment: Alignment.center,
+    fontSize: _baseFontSize
+  ),
+);
 
 Future<void> showMiniLabels(String baseNumber, LabelRequest request) async {
   PdfTemplate template = await _getTemplate();
@@ -52,6 +104,28 @@ Future<void> showMiniLabels(String baseNumber, LabelRequest request) async {
   document.dispose();
 
   await OpenFile.open(filePath);
+}
+
+void drawString(PdfGraphics graphics, String string, TextElementLayout layout,
+    {Offset baseOffset = const Offset(0.0, 0.0)}) {
+  final font =
+      PdfCjkStandardFont(PdfCjkFontFamily.heiseiKakuGothicW5, layout.fontSize);
+  final stringSize = font.measureString(string);
+  final absOffset = baseOffset + layout.offset;
+
+  final bounds = switch (layout.alignment) {
+    Alignment.left => Rect.fromLTWH(
+        absOffset.dx, absOffset.dy, layout.size.width, layout.size.height),
+    Alignment.center => Rect.fromCenter(
+        center: absOffset + Offset(stringSize.width / 2, stringSize.height / 2),
+        width: stringSize.width,
+        height: stringSize.height),
+    Alignment.right => Rect.fromLTWH(
+        absOffset.dx + layout.size.width - stringSize.width,
+        absOffset.dy,
+        stringSize.width,
+        layout.size.height)
+  };
 }
 
 void Function(String string, (double, double)) _createStringDrawer(
