@@ -16,6 +16,7 @@ const _offsets =
 
 const _pageWidth = 728.490;
 const _pageHeight = 515.9052;
+const _labelWidth = 164.0;
 const _baseFontSize = 9.0;
 
 typedef _LayoutConfig = ({
@@ -34,32 +35,32 @@ const _LayoutConfig _layoutConfig = (
   page: Size(_pageWidth, _pageHeight),
   label: (
     offset: Offset(32.0, 40.0),
-    size: Size(164.0, 143.28),
+    size: Size(_labelWidth, 143.28),
   ),
 );
 
 const _LabelLayoutConfig _labelLayoutConfig = (
   productName: (
-    offset: Offset(0.0, 50.0),
-    size: Size(_pageWidth, 0.0),
+    offset: Offset(0.0, 10.0),
+    size: Size(_labelWidth, 0.0),
     alignment: Alignment.center,
     fontSize: _baseFontSize
   ),
   productWidth: (
-    offset: Offset(52.0, 71.0),
-    size: Size(30, 0.0),
+    offset: Offset(20.0, 31.0),
+    size: Size(20, 0.0),
     alignment: Alignment.right,
     fontSize: _baseFontSize
   ),
   baseNumber: (
-    offset: Offset(76.0, 89.0),
-    size: Size(30, 0.0),
+    offset: Offset(52.0, 49.0),
+    size: Size(32, 0.0),
     alignment: Alignment.left,
     fontSize: _baseFontSize
   ),
   packingForm: (
-    offset: Offset(0.0, 120.0),
-    size: Size(_pageWidth, 0.0),
+    offset: Offset(0.0, 122.0),
+    size: Size(_labelWidth, 0.0),
     alignment: Alignment.center,
     fontSize: _baseFontSize
   ),
@@ -72,30 +73,22 @@ Future<void> showMiniLabels(String baseNumber, LabelRequest request) async {
   document.pageSettings.setMargins(0);
   document.pageSettings.size = _sizes.page;
   document.pageSettings.orientation = PdfPageOrientation.landscape;
-  final font = PdfCjkStandardFont(PdfCjkFontFamily.heiseiKakuGothicW5, 9);
 
   final page = document.pages.add();
   page.graphics.drawPdfTemplate(template, const Offset(0, 0));
 
-  final drawString = _createStringDrawer(page.graphics, font);
-  final drawCenterString = _createStringCenterDrawer(page.graphics, font);
+  final productName = request.items[0].material?.name ?? '';
+  final packingForm = request.items.first.packingForm?.name ?? '';
 
-  final productName = request.items[0].material!.name;
-  final packingForm = request.items.first.packingForm!.name;
-
-  //drawCenterString(productName, (114, 50));
-  drawCenterString(
-      productName, (_offsets.firstLabel.dx + _sizes.label.width / 2, 50));
-  drawString(baseNumber, (76, 89));
-  drawString(request.items[0].width?.value.toString() ?? '', (52, 71));
-  drawCenterString(packingForm, (
-    _offsets.firstLabel.dx + _offsets.packingForm.dx + _sizes.label.width / 2,
-    _offsets.firstLabel.dy + _offsets.packingForm.dy,
-  ));
-
-  // page.graphics.drawRectangle(
-  //     brush: PdfSolidBrush(PdfColor(0, 0, 0)),
-  //     bounds: const Rect.fromLTWH(32, 40, 164, 143.28));
+  drawString(page.graphics, productName, _labelLayoutConfig.productName,
+      baseOffset: _layoutConfig.label.offset);
+  drawString(page.graphics, baseNumber, _labelLayoutConfig.baseNumber,
+      baseOffset: _layoutConfig.label.offset);
+  drawString(page.graphics, request.items[0].width?.value.toString() ?? '',
+      _labelLayoutConfig.productWidth,
+      baseOffset: _layoutConfig.label.offset);
+  drawString(page.graphics, packingForm, _labelLayoutConfig.packingForm,
+      baseOffset: _layoutConfig.label.offset);
 
   final filePath = await _reportFilePath();
   final outputFile = File(filePath);
@@ -117,7 +110,8 @@ void drawString(PdfGraphics graphics, String string, TextElementLayout layout,
     Alignment.left => Rect.fromLTWH(
         absOffset.dx, absOffset.dy, layout.size.width, layout.size.height),
     Alignment.center => Rect.fromCenter(
-        center: absOffset + Offset(stringSize.width / 2, stringSize.height / 2),
+        center:
+            absOffset + Offset(layout.size.width / 2, stringSize.height / 2),
         width: stringSize.width,
         height: stringSize.height),
     Alignment.right => Rect.fromLTWH(
@@ -126,28 +120,10 @@ void drawString(PdfGraphics graphics, String string, TextElementLayout layout,
         stringSize.width,
         layout.size.height)
   };
+
+  graphics.drawString(string, font,
+      brush: PdfSolidBrush(PdfColor(0, 0, 0)), bounds: bounds);
 }
-
-void Function(String string, (double, double)) _createStringDrawer(
-        PdfGraphics graphics, PdfCjkStandardFont font) =>
-    (string, postion) => graphics.drawString(
-          string,
-          font,
-          brush: PdfSolidBrush(PdfColor(0, 0, 0)),
-          bounds: Rect.fromLTWH(postion.$1, postion.$2, _sizes.page.width, 0),
-        );
-
-void Function(String string, (double, double)) _createStringCenterDrawer(
-        PdfGraphics graphics, PdfCjkStandardFont font) =>
-    (string, postion) {
-      final size = font.measureString(string);
-      graphics.drawString(string, font,
-          brush: PdfSolidBrush(PdfColor(0, 0, 0)),
-          bounds: Rect.fromCenter(
-              center: Offset(postion.$1, postion.$2 + size.height / 2),
-              width: size.width,
-              height: 0));
-    };
 
 Future<PdfTemplate> _getTemplate() async {
   final inputBytes = await rootBundle
