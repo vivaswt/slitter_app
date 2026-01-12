@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slitter_app/api/notion.dart';
+import 'package:slitter_app/extension/pipable.dart';
 import 'package:slitter_app/model/mini_label_request.dart';
 import 'package:slitter_app/model/roll_material.dart';
 import 'package:slitter_app/model/packing_form.dart';
@@ -50,8 +51,8 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: MiniLabelPrintAppBar(
-        onPrint: () => showMiniLabels(_baseNumber.value, _labelRequest),
-      ),
+          onPrint: () => createPrintJob(_baseNumber.value, _labelRequest)
+              .pipe((job) => showMiniLabels(_baseNumber.value, job))),
       body: FutureBuilder(
           future: _fetchAll(),
           builder: (context, snapshot) {
@@ -84,6 +85,19 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
     super.dispose();
     _labelRequest.dispose();
   }
+}
+
+MiniLabelPrintJob createPrintJob(String baseNumber, LabelRequest labelRequest) {
+  final List<MiniLabelPrintJobItem> items = labelRequest.items
+      .map((requestItem) => (
+            material: requestItem.material!,
+            width: requestItem.width!,
+            packingForm: requestItem.packingForm!,
+            printCount: requestItem.printCount!
+          ))
+      .toList();
+
+  return (baseNumber: baseNumber, items: items);
 }
 
 class AddNewLineButton extends StatelessWidget {

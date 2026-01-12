@@ -1,10 +1,7 @@
 import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/services.dart';
 import 'package:open_file/open_file.dart';
 import 'package:slitter_app/extension/fp_iterable.dart';
-import 'package:slitter_app/model/mini_label_request.dart';
 import 'package:slitter_app/model/packing_form.dart';
 import 'package:slitter_app/model/roll_material.dart';
 import 'package:slitter_app/model/roll_width.dart';
@@ -21,10 +18,10 @@ const _baseFontSize = 9.0;
 
 typedef MiniLabelPrintJob = ({
   String baseNumber,
-  List<MiniLabelPrintItem> items,
+  List<MiniLabelPrintJobItem> items,
 });
 
-typedef MiniLabelPrintItem = ({
+typedef MiniLabelPrintJobItem = ({
   RollMaterial material,
   RollWidth width,
   PackingForm packingForm,
@@ -50,7 +47,7 @@ const _LayoutConfig _layoutConfig = (
   page: Size(_pageWidth, _pageHeight),
   label: (
     offset: Offset(32.0, 40.0),
-    size: Size(_labelWidth, 143.28),
+    size: Size(_labelWidth, 145.20),
   ),
 );
 
@@ -84,37 +81,27 @@ const _LabelLayoutConfig _labelLayoutConfig = (
   columnsPerPage: 4,
 );
 
-Future<void> showMiniLabels(String baseNumber, LabelRequest request) async {
-  PdfTemplate template = await _getTemplate();
-
-  final document = PdfDocument();
-  document.pageSettings.setMargins(0);
-  document.pageSettings.size = _layoutConfig.page;
-  document.pageSettings.orientation = PdfPageOrientation.landscape;
-
-  final page = document.pages.add();
-  page.graphics.drawPdfTemplate(template, const Offset(0, 0));
-
-  final productName = request.items[0].material?.name ?? '';
-  final packingForm = request.items.first.packingForm?.name ?? '';
-
-  drawString(page.graphics, productName, _labelLayoutConfig.productName,
-      baseOffset: _layoutConfig.label.offset);
-  drawString(page.graphics, baseNumber, _labelLayoutConfig.baseNumber,
-      baseOffset: _layoutConfig.label.offset);
-  drawString(page.graphics, request.items[0].width?.value.toString() ?? '',
-      _labelLayoutConfig.productWidth,
-      baseOffset: _layoutConfig.label.offset);
-  drawString(page.graphics, packingForm, _labelLayoutConfig.packingForm,
-      baseOffset: _layoutConfig.label.offset);
+Future<void> showMiniLabels(String baseNumber, MiniLabelPrintJob job) async {
+  final document = _createDocumentWithSetting();
+  await _renderLabels(job, document);
 
   final filePath = await _reportFilePath();
   final outputFile = File(filePath);
 
-  outputFile.writeAsBytes(await document.save());
+  final outputBytes = await document.save();
+  await outputFile.writeAsBytes(outputBytes);
+
   document.dispose();
 
   await OpenFile.open(filePath);
+}
+
+PdfDocument _createDocumentWithSetting() {
+  final document = PdfDocument();
+  document.pageSettings.setMargins(0);
+  document.pageSettings.size = _layoutConfig.page;
+  document.pageSettings.orientation = PdfPageOrientation.landscape;
+  return document;
 }
 
 void drawString(PdfGraphics graphics, String string, TextElementLayout layout,
@@ -165,15 +152,30 @@ Future<String> _reportFilePath() async {
   return p.join(tempDirectory.path, fileName);
 }
 
-typedef LabelPosition = ({PdfPage page, Offset offset});
+typedef _LabelPosition = ({PdfPage page, Offset offset});
 
-Iterable<LabelPosition> _allLabelOffsets(
-        PdfDocument document, int countOfPages) =>
-    _addPages(document, countOfPages).expand((page) =>
-        _labelOffsetsInPage().map((offset) => (page: page, offset: offset)));
+Future<Iterable<_LabelPosition>> _allLabelOffsets(
+    PdfDocument document, int countOfPages) async {
+  final pages = await _addPages(document, countOfPages);
+  final offsets = _labelOffsetsInPage();
+  final positions = pages
+      .expand((page) => offsets.map((offset) => (page: page, offset: offset)));
 
-Iterable<PdfPage> _addPages(PdfDocument document, int countOfPages) =>
-    Iterable.generate(countOfPages, (i) => document.pages.add());
+  return positions;
+}
+
+Future<Iterable<PdfPage>> _addPages(
+    PdfDocument document, int countOfPages) async {
+  PdfTemplate template = await _getTemplate();
+
+  final pages = Iterable.generate(countOfPages, (_) {
+    final page = document.pages.add();
+    page.graphics.drawPdfTemplate(template, Offset.zero);
+    return page;
+  });
+
+  return pages;
+}
 
 Iterable<Offset> _labelOffsetsInPage() =>
     Iterable.generate(_labelLayoutConfig.countOfLabelsPerPage, (i) {
@@ -181,18 +183,18 @@ Iterable<Offset> _labelOffsetsInPage() =>
           _layoutConfig.label.size.width *
               (i % _labelLayoutConfig.columnsPerPage),
           _layoutConfig.label.size.height *
-              (i ~/ _labelLayoutConfig.rowsPerPage));
+              (i ~/ _labelLayoutConfig.columnsPerPage));
       return _layoutConfig.label.offset + offset;
     });
 
-typedef LabelElements = ({
+typedef _LabelElements = ({
   String productName,
   int productWidth,
   String baseNumber,
   String packingForm,
 });
 
-void _drawLabel(LabelElements elements, LabelPosition position) {
+void _drawLabel(_LabelElements elements, _LabelPosition position) {
   void draw(String string, TextElementLayout layout) =>
       drawString(position.page.graphics, string, layout,
           baseOffset: position.offset);
@@ -203,24 +205,37 @@ void _drawLabel(LabelElements elements, LabelPosition position) {
   draw(elements.packingForm, _labelLayoutConfig.packingForm);
 }
 
-Iterable<LabelElements> _labelData(MiniLabelPrintJob job) =>
-    job.items.map((item) => (
-          productName: item.material.name,
-          productWidth: item.width.value,
-          baseNumber: job.baseNumber,
-          packingForm: item.packingForm.name
-        ));
+Iterable<_LabelElements> _labelData(MiniLabelPrintJob job) {
+  _LabelElements toElements(MiniLabelPrintJobItem item) => (
+        productName: item.material.name,
+        productWidth: item.width.value,
+        baseNumber: job.baseNumber,
+        packingForm: item.packingForm.name
+      );
 
-void renderLabels(MiniLabelPrintJob job, PdfDocument document) {
+  final elementss = job.items.expand((jobItem) =>
+      Iterable.generate(jobItem.printCount, (_) => toElements(jobItem)));
+
+  return elementss;
+}
+
+Future<void> _renderLabels(MiniLabelPrintJob job, PdfDocument document) async {
+  final labelData = _labelData(job);
+  final countOfPages = _countOfPagesFromPrintJob(job);
+  final labelOffsets = await _allLabelOffsets(document, countOfPages);
+
+  // zipWith returns an Iterable, so it is not executed until it is iterated.
+  // Therefore, toList() is called to execute the drawing.
+  labelData
+      .zipWith(labelOffsets, (elements, offset) => _drawLabel(elements, offset))
+      .toList();
+}
+
+int _countOfPagesFromPrintJob(MiniLabelPrintJob job) {
   final countOfLabels = job.items
       .map((item) => item.printCount)
-      .reduce((value, element) => value + element);
+      .fold(0, (value, element) => value + element);
   final countOfPages =
       (countOfLabels / _labelLayoutConfig.countOfLabelsPerPage).ceil();
-
-  final labelData = _labelData(job);
-  final labelOffsets = _allLabelOffsets(document, countOfPages);
-
-  labelData.zipWith(
-      labelOffsets, (elements, offset) => _drawLabel(elements, offset));
+  return countOfPages;
 }
