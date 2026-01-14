@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 extension WrapWithExtensionForMultiChild on List<Widget> {
   Widget wrapWithColumn({
@@ -346,6 +347,26 @@ extension WrapWithExtension on Widget {
         key: key,
         groupValue: groupValue,
         onChanged: onChanged,
+        child: this,
+      );
+
+  Widget wrapWithMouseRegion({
+    Key? key,
+    PointerEnterEventListener? onEnter,
+    PointerExitEventListener? onExit,
+    PointerHoverEventListener? onHover,
+    MouseCursor cursor = MouseCursor.defer,
+    bool opaque = true,
+    HitTestBehavior hitTestBehavior = HitTestBehavior.deferToChild,
+  }) =>
+      MouseRegion(
+        key: key,
+        onEnter: onEnter,
+        onExit: onExit,
+        onHover: onHover,
+        cursor: cursor,
+        opaque: opaque,
+        hitTestBehavior: hitTestBehavior,
         child: this,
       );
 }

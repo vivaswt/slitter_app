@@ -121,9 +121,9 @@ class AddNewLineButton extends StatelessWidget {
 }
 
 class DeleteLineButton extends StatelessWidget {
-  VoidCallback onDelete;
+  final VoidCallback onDelete;
 
-  DeleteLineButton({super.key, required this.onDelete});
+  const DeleteLineButton({super.key, required this.onDelete});
 
   @override
   Widget build(BuildContext context) => IconButton(
@@ -184,7 +184,7 @@ class MiniLabelPrintAppBar extends StatelessWidget
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-class MiniLabelPrintItem extends StatelessWidget {
+class MiniLabelPrintItem extends StatefulWidget {
   final RequestItem item;
   final List<RollMaterial> rollMaterials;
   final List<RollWidth> rollWidths;
@@ -200,14 +200,37 @@ class MiniLabelPrintItem extends StatelessWidget {
       required this.packingForms});
 
   @override
+  State<MiniLabelPrintItem> createState() => _MiniLabelPrintItemState();
+}
+
+class _MiniLabelPrintItemState extends State<MiniLabelPrintItem> {
+  final _isHovering = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    _isHovering.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => <Widget>[
-        RollMaterialDropDownMenu(rollMaterials: rollMaterials, item: item),
-        RollWidthDropDownMenu(rollWidths: rollWidths, item: item),
-        PackingFormDropDownMenu(packingForms: packingForms, item: item),
-        PrintCountDropDownMenu(item: item),
+        RollMaterialDropDownMenu(
+            rollMaterials: widget.rollMaterials, item: widget.item),
+        RollWidthDropDownMenu(rollWidths: widget.rollWidths, item: widget.item),
+        PackingFormDropDownMenu(
+            packingForms: widget.packingForms, item: widget.item),
+        PrintCountDropDownMenu(item: widget.item),
         const Spacer(),
-        DeleteLineButton(onDelete: onDelete)
-      ].wrapWithRow(spacing: 4);
+        ValueListenableBuilder(
+          valueListenable: _isHovering,
+          builder: (context, value, child) => value
+              ? DeleteLineButton(onDelete: widget.onDelete)
+              : const SizedBox.shrink(),
+        ),
+      ].wrapWithRow(spacing: 4).wrapWithMouseRegion(
+          hitTestBehavior: HitTestBehavior.opaque,
+          onEnter: (_) => _isHovering.value = true,
+          onExit: (_) => _isHovering.value = false);
 }
 
 class BaseNumberTextField extends StatelessWidget {
