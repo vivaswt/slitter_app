@@ -54,30 +54,32 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
           onPrint: () => createPrintJob(_baseNumber.value, _labelRequest)
               .pipe((job) => showMiniLabels(_baseNumber.value, job))),
       body: FutureBuilder(
-          future: _fetchAll(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              final (:rollMaterials, :rollWidths, :packingForms) =
-                  snapshot.data!;
+              future: _fetchAll(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final (:rollMaterials, :rollWidths, :packingForms) =
+                      snapshot.data!;
 
-              return [
-                BaseNumberTextField(baseNumber: _baseNumber),
-                MiniLabelPrintList(
-                  labelRequest: _labelRequest,
-                  rollMaterials: rollMaterials,
-                  rollWidths: rollWidths,
-                  packingForms: packingForms,
-                ).wrapWithExpanded()
-              ].wrapWithColumn(spacing: 8);
-            }
+                  return [
+                    BaseNumberTextField(baseNumber: _baseNumber),
+                    MiniLabelPrintList(
+                      labelRequest: _labelRequest,
+                      rollMaterials: rollMaterials,
+                      rollWidths: rollWidths,
+                      packingForms: packingForms,
+                    ).wrapWithExpanded()
+                  ].wrapWithColumn(spacing: 8);
+                }
 
-            if (snapshot.hasError) {
-              return Text('error: ${snapshot.error}');
-            }
+                if (snapshot.hasError) {
+                  return Text('error: ${snapshot.error}');
+                }
 
-            return const SizedBox(
-                width: 60, height: 60, child: CircularProgressIndicator());
-          }).wrapWithPadding(padding: const EdgeInsetsGeometry.all(16)),
+                return const SizedBox(
+                    width: 60, height: 60, child: CircularProgressIndicator());
+              })
+          .wrapWithPadding(
+              padding: const EdgeInsetsGeometry.fromLTRB(16, 16, 16, 80)),
       floatingActionButton: AddNewLineButton(labelRequest: _labelRequest));
 
   @override
@@ -118,6 +120,18 @@ class AddNewLineButton extends StatelessWidget {
   }
 }
 
+class DeleteLineButton extends StatelessWidget {
+  VoidCallback onDelete;
+
+  DeleteLineButton({super.key, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+      onPressed: onDelete,
+      icon: const Icon(Icons.delete_outline),
+      tooltip: '行削除');
+}
+
 class MiniLabelPrintList extends StatelessWidget {
   final LabelRequest labelRequest;
   final List<RollMaterial> rollMaterials;
@@ -139,6 +153,8 @@ class MiniLabelPrintList extends StatelessWidget {
           itemCount: labelRequest.items.length,
           itemBuilder: (context, index) => MiniLabelPrintItem(
                 item: labelRequest.items[index],
+                onDelete: () =>
+                    labelRequest.removeItem(labelRequest.items[index]),
                 rollMaterials: rollMaterials,
                 rollWidths: rollWidths,
                 packingForms: packingForms,
@@ -173,10 +189,12 @@ class MiniLabelPrintItem extends StatelessWidget {
   final List<RollMaterial> rollMaterials;
   final List<RollWidth> rollWidths;
   final List<PackingForm> packingForms;
+  final VoidCallback onDelete;
 
   const MiniLabelPrintItem(
       {super.key,
       required this.item,
+      required this.onDelete,
       required this.rollMaterials,
       required this.rollWidths,
       required this.packingForms});
@@ -187,6 +205,8 @@ class MiniLabelPrintItem extends StatelessWidget {
         RollWidthDropDownMenu(rollWidths: rollWidths, item: item),
         PackingFormDropDownMenu(packingForms: packingForms, item: item),
         PrintCountDropDownMenu(item: item),
+        const Spacer(),
+        DeleteLineButton(onDelete: onDelete)
       ].wrapWithRow(spacing: 4);
 }
 
