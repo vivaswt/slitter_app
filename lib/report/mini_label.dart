@@ -14,7 +14,9 @@ import 'package:path/path.dart' as p;
 const _pageWidth = 728.490;
 const _pageHeight = 515.9052;
 const _labelWidth = 164.0;
-const _baseFontSize = 9.0;
+const _baseFontSize = 11.0;
+const _productNameFontSize = 10.0;
+const _packingFormFontSize = 9.5;
 
 typedef MiniLabelPrintJob = ({
   String baseNumber,
@@ -56,17 +58,17 @@ const _LabelLayoutConfig _labelLayoutConfig = (
     offset: Offset(0.0, 10.0),
     size: Size(_labelWidth, 0.0),
     alignment: Alignment.center,
-    fontSize: _baseFontSize
+    fontSize: _productNameFontSize
   ),
   productWidth: (
-    offset: Offset(20.0, 31.0),
+    offset: Offset(20.0, 30.0),
     size: Size(20, 0.0),
     alignment: Alignment.right,
     fontSize: _baseFontSize
   ),
   baseNumber: (
-    offset: Offset(52.0, 49.0),
-    size: Size(32, 0.0),
+    offset: Offset(45.0, 48.0),
+    size: Size(42.5, 0.0),
     alignment: Alignment.left,
     fontSize: _baseFontSize
   ),
@@ -74,7 +76,7 @@ const _LabelLayoutConfig _labelLayoutConfig = (
     offset: Offset(0.0, 122.0),
     size: Size(_labelWidth, 0.0),
     alignment: Alignment.center,
-    fontSize: _baseFontSize
+    fontSize: _packingFormFontSize
   ),
   countOfLabelsPerPage: 8,
   rowsPerPage: 2,
