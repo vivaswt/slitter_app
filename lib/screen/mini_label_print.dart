@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:slitter_app/api/notion.dart';
-import 'package:slitter_app/extension/pipable.dart';
 import 'package:slitter_app/model/mini_label_request.dart';
 import 'package:slitter_app/model/roll_material.dart';
 import 'package:slitter_app/model/packing_form.dart';
@@ -29,6 +28,7 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
   final Future<List<RollMaterial>> _rollMaterials = fetchMaterials();
   final Future<List<RollWidth>> _rollWidths = fetchRollWidths();
   final Future<List<PackingForm>> _packingForms = fetchPackingForms();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -50,9 +50,7 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      appBar: MiniLabelPrintAppBar(
-          onPrint: () => createPrintJob(_baseNumber.value, _labelRequest)
-              .pipe((job) => showMiniLabels(_baseNumber.value, job))),
+      appBar: MiniLabelPrintAppBar(onPrint: _showMiniLabels),
       body: FutureBuilder(
               future: _fetchAll(),
               builder: (context, snapshot) {
@@ -68,7 +66,7 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
                       rollWidths: rollWidths,
                       packingForms: packingForms,
                     ).wrapWithExpanded()
-                  ].wrapWithColumn(spacing: 8);
+                  ].wrapWithColumn(spacing: 8).wrapWithForm(key: _formKey);
                 }
 
                 if (snapshot.hasError) {
@@ -84,8 +82,26 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
 
   @override
   void dispose() {
-    super.dispose();
     _labelRequest.dispose();
+    super.dispose();
+  }
+
+  Future<void> _showMiniLabels() async {
+    if (_labelRequest.items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('印刷するラベルがありません。')),
+      );
+
+      return;
+    }
+
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final printJob = createPrintJob(_baseNumber.value, _labelRequest);
+
+    await showMiniLabels(_baseNumber.value, printJob);
   }
 }
 
@@ -243,9 +259,18 @@ class BaseNumberTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TextFormField(
         initialValue: _baseNumber.value,
+        validator: _validator,
         decoration: const InputDecoration(labelText: '製品ロール№'),
         onChanged: (value) => _baseNumber.value = value,
       );
+
+  String? _validator(String? value) {
+    if (value == null || value.isEmpty) {
+      return '製品ロール№を入力してください';
+    }
+    return null;
+  }
+  //switch (value) { null || '' => '製品ロール№を入力してください', _ => null };
 }
 
 class RollMaterialDropDownMenu extends StatelessWidget {
@@ -261,9 +286,10 @@ class RollMaterialDropDownMenu extends StatelessWidget {
         .map((m) => DropdownMenuEntry(value: m, label: m.name))
         .toList();
 
-    return DropdownMenu<RollMaterial?>(
+    return DropdownMenuFormField<RollMaterial?>(
       //label: const Text('品名'),
       initialSelection: item.material,
+      validator: _validator,
       requestFocusOnTap: false,
       dropdownMenuEntries: entries,
       inputDecorationTheme: const InputDecorationTheme(
@@ -271,6 +297,13 @@ class RollMaterialDropDownMenu extends StatelessWidget {
       ),
       onSelected: (value) => item.material = value,
     );
+  }
+
+  String? _validator(RollMaterial? value) {
+    if (value == null) {
+      return '品名を選択してください';
+    }
+    return null;
   }
 }
 
@@ -293,9 +326,10 @@ class RollWidthDropDownMenu extends StatelessWidget {
             )))
         .toList();
 
-    return DropdownMenu<RollWidth?>(
+    return DropdownMenuFormField<RollWidth?>(
       //label: const Text('巾'),
       initialSelection: item.width,
+      validator: _validator,
       requestFocusOnTap: false,
       dropdownMenuEntries: entries,
       inputDecorationTheme: const InputDecorationTheme(
@@ -304,6 +338,13 @@ class RollWidthDropDownMenu extends StatelessWidget {
       onSelected: (value) => item.width = value,
       textAlign: TextAlign.right,
     );
+  }
+
+  String? _validator(RollWidth? value) {
+    if (value == null) {
+      return '巾を選択してください';
+    }
+    return null;
   }
 }
 
@@ -320,9 +361,10 @@ class PackingFormDropDownMenu extends StatelessWidget {
         .map((pf) => DropdownMenuEntry(value: pf, label: pf.name))
         .toList();
 
-    return DropdownMenu<PackingForm?>(
+    return DropdownMenuFormField<PackingForm?>(
       //label: const Text('角当て'),
       initialSelection: item.packingForm,
+      validator: _validator,
       requestFocusOnTap: false,
       dropdownMenuEntries: entries,
       inputDecorationTheme: const InputDecorationTheme(
@@ -330,6 +372,13 @@ class PackingFormDropDownMenu extends StatelessWidget {
       ),
       onSelected: (value) => item.packingForm = value,
     );
+  }
+
+  String? _validator(PackingForm? value) {
+    if (value == null) {
+      return '包装形態を選択してください';
+    }
+    return null;
   }
 }
 
@@ -343,9 +392,10 @@ class PrintCountDropDownMenu extends StatelessWidget {
     final entries = List.generate(
         20, (i) => DropdownMenuEntry(value: i + 1, label: '${i + 1}枚'));
 
-    return DropdownMenu<int?>(
+    return DropdownMenuFormField<int?>(
       //label: const Text('枚数'),
       initialSelection: item.printCount,
+      validator: _validator,
       requestFocusOnTap: false,
       dropdownMenuEntries: entries,
       inputDecorationTheme: const InputDecorationTheme(
@@ -353,5 +403,12 @@ class PrintCountDropDownMenu extends StatelessWidget {
       ),
       onSelected: (value) => item.printCount = value,
     );
+  }
+
+  String? _validator(int? value) {
+    if (value == null) {
+      return '印刷枚数を選択してください';
+    }
+    return null;
   }
 }

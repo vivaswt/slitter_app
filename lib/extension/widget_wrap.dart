@@ -369,4 +369,20 @@ extension WrapWithExtension on Widget {
         hitTestBehavior: hitTestBehavior,
         child: this,
       );
+
+  Widget wrapWithForm({
+    Key? key,
+    bool? canPop,
+    PopInvokedWithResultCallback<Object?>? onPopInvokedWithResult,
+    VoidCallback? onChanged,
+    AutovalidateMode? autovalidateMode,
+  }) =>
+      Form(
+        key: key,
+        canPop: canPop,
+        onPopInvokedWithResult: onPopInvokedWithResult,
+        onChanged: onChanged,
+        autovalidateMode: autovalidateMode,
+        child: this,
+      );
 }
