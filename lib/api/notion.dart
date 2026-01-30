@@ -6,13 +6,15 @@ import 'package:http/http.dart' as http;
 import 'package:deep_pick/deep_pick.dart';
 import 'package:slitter_app/model/packing_form.dart';
 import 'package:slitter_app/model/roll_width.dart';
+import 'package:slitter_app/model/setting_service.dart';
 
 Future<List<RollMaterial>> fetchMaterials([String? startCursor]) async {
   final url = Uri.parse(
       'https://api.notion.com/v1/data_sources/a09b3d76bdb04d859e02c502c989276e/query');
+  final apiKey = await SettingsService().getNotionApiKey();
   final headers = {
     'Notion-Version': '2025-09-03',
-    'Authorization': Platform.environment['SLITTER_NOTION_API_KEY']!,
+    'Authorization': apiKey,
     'Content-Type': 'application/json',
   };
   final Map<String, dynamic> body = {
@@ -54,9 +56,10 @@ String? _richTextFromPick(Pick prop) {
 Future<List<PackingForm>> fetchPackingForms() async {
   final url = Uri.parse(
       'https://api.notion.com/v1/data_sources/2da606831b2d80ef824d000bc5d59faa/query');
+  final apiKey = await SettingsService().getNotionApiKey();
   final headers = {
     'Notion-Version': '2025-09-03',
-    'Authorization': Platform.environment['SLITTER_NOTION_API_KEY']!,
+    'Authorization': apiKey,
     'Content-Type': 'application/json',
   };
   final body = {
@@ -87,9 +90,10 @@ PackingForm _packingFormFromPick(Pick page) =>
 Future<List<RollWidth>> fetchRollWidths() async {
   final url = Uri.parse(
       'https://api.notion.com/v1/data_sources/2da606831b2d8000b8c5000b6e226133/query');
+  final apiKey = await SettingsService().getNotionApiKey();
   final headers = {
     'Notion-Version': '2025-09-03',
-    'Authorization': Platform.environment['SLITTER_NOTION_API_KEY']!,
+    'Authorization': apiKey,
     'Content-Type': 'application/json',
   };
   final result = await http.post(url, headers: headers);

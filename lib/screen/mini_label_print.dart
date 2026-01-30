@@ -6,6 +6,7 @@ import 'package:slitter_app/model/packing_form.dart';
 import 'package:slitter_app/model/roll_width.dart';
 import 'package:slitter_app/extension/widget_wrap.dart';
 import 'package:slitter_app/report/mini_label.dart';
+import 'package:slitter_app/screen/main_drawer.dart';
 
 class MiniLabelPrint extends StatefulWidget {
   const MiniLabelPrint({super.key});
@@ -25,22 +26,22 @@ typedef _FetchedDatas = ({
 class MiniLabelPrintState extends State<MiniLabelPrint> {
   final ValueNotifier<String> _baseNumber = ValueNotifier('');
   late final LabelRequest _labelRequest;
-  final Future<List<RollMaterial>> _rollMaterials = fetchMaterials();
-  final Future<List<RollWidth>> _rollWidths = fetchRollWidths();
-  final Future<List<PackingForm>> _packingForms = fetchPackingForms();
+  late final Future<_FetchedDatas> _fetchedDatas;
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
+    _fetchedDatas = _fetchAll();
     _labelRequest = LabelRequest();
     _labelRequest.addItem(RequestItem());
   }
 
   Future<_FetchedDatas> _fetchAll() async {
-    final rollMaterials = await _rollMaterials;
-    final rollWidths = await _rollWidths;
-    final packingForms = await _packingForms;
+    final rollMaterials = await fetchMaterials();
+    final rollWidths = await fetchRollWidths();
+    final packingForms = await fetchPackingForms();
+
     return (
       rollMaterials: rollMaterials,
       rollWidths: rollWidths,
@@ -51,8 +52,9 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: MiniLabelPrintAppBar(onPrint: _showMiniLabels),
+      drawer: const MainDrawer(),
       body: FutureBuilder(
-              future: _fetchAll(),
+              future: _fetchedDatas,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
                   final (:rollMaterials, :rollWidths, :packingForms) =
