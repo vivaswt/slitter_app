@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:slitter_app/api/notion.dart';
+import 'package:slitter_app/repository/notion.dart';
 import 'package:slitter_app/model/mini_label_request.dart';
 import 'package:slitter_app/model/roll_material.dart';
 import 'package:slitter_app/model/packing_form.dart';
@@ -7,6 +7,8 @@ import 'package:slitter_app/model/roll_width.dart';
 import 'package:slitter_app/extension/widget_wrap.dart';
 import 'package:slitter_app/report/mini_label.dart';
 import 'package:slitter_app/screen/main_drawer.dart';
+import 'package:slitter_app/service/startup.dart';
+import 'package:slitter_app/repository/file.dart' as local_repository;
 
 class MiniLabelPrint extends StatefulWidget {
   const MiniLabelPrint({super.key});
@@ -35,12 +37,14 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
     _fetchedDatas = _fetchAll();
     _labelRequest = LabelRequest();
     _labelRequest.addItem(RequestItem());
+
+    StartupService.run();
   }
 
   Future<_FetchedDatas> _fetchAll() async {
-    final rollMaterials = await fetchMaterials();
-    final rollWidths = await fetchRollWidths();
-    final packingForms = await fetchPackingForms();
+    final rollMaterials = await local_repository.loadRollMaterials();
+    final rollWidths = await local_repository.loadRollWidths();
+    final packingForms = await local_repository.loadPackingForms();
 
     return (
       rollMaterials: rollMaterials,

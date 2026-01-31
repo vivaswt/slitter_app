@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:slitter_app/api/notion.dart';
+import 'package:slitter_app/repository/notion.dart';
 
 void main() {
   group('normal', () {

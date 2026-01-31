@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slitter_app/extension/widget_wrap.dart';
-import 'package:slitter_app/model/setting_service.dart';
+import 'package:slitter_app/service/setting_service.dart';
 import 'package:slitter_app/screen/main_drawer.dart';
 
 class SettingScreen extends StatelessWidget {
