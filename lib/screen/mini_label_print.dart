@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:slitter_app/model/roll_number.dart';
 import 'package:slitter_app/repository/notion.dart';
 import 'package:slitter_app/model/mini_label_request.dart';
 import 'package:slitter_app/model/roll_material.dart';
@@ -26,7 +27,7 @@ typedef _FetchedDatas = ({
 });
 
 class MiniLabelPrintState extends State<MiniLabelPrint> {
-  final ValueNotifier<String> _baseNumber = ValueNotifier('');
+  late ValueNotifier<DateTime> _baseNumberDate;
   late final LabelRequest _labelRequest;
   late final Future<_FetchedDatas> _fetchedDatas;
   final _formKey = GlobalKey<FormState>();
@@ -34,6 +35,7 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
   @override
   void initState() {
     super.initState();
+    _baseNumberDate = ValueNotifier(DateTime.now());
     _fetchedDatas = _fetchAll();
     _labelRequest = LabelRequest();
     _labelRequest.addItem(RequestItem());
@@ -65,7 +67,16 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
                       snapshot.data!;
 
                   return [
-                    BaseNumberTextField(baseNumber: _baseNumber),
+                    [
+                      ValueListenableBuilder(
+                              valueListenable: _baseNumberDate,
+                              builder: (context, value, child) =>
+                                  BaseNumberTextField(
+                                      baseNumber:
+                                          RollBaseNumber.fromDate(value)))
+                          .wrapWithExpanded(),
+                      BaseNumberDateInput(rollNumberBaseDate: _baseNumberDate)
+                    ].wrapWithRow(),
                     MiniLabelPrintList(
                       labelRequest: _labelRequest,
                       rollMaterials: rollMaterials,
@@ -105,13 +116,15 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
       return;
     }
 
-    final printJob = createPrintJob(_baseNumber.value, _labelRequest);
+    final printJob = createPrintJob(
+        RollBaseNumber.fromDate(_baseNumberDate.value), _labelRequest);
 
-    await showMiniLabels(_baseNumber.value, printJob);
+    await showMiniLabels(printJob);
   }
 }
 
-MiniLabelPrintJob createPrintJob(String baseNumber, LabelRequest labelRequest) {
+MiniLabelPrintJob createPrintJob(
+    RollBaseNumber baseNumber, LabelRequest labelRequest) {
   final List<MiniLabelPrintJobItem> items = labelRequest.items
       .map((requestItem) => (
             material: requestItem.material!,
@@ -256,27 +269,40 @@ class _MiniLabelPrintItemState extends State<MiniLabelPrintItem> {
 }
 
 class BaseNumberTextField extends StatelessWidget {
-  final ValueNotifier<String> _baseNumber;
+  final RollBaseNumber baseNumber;
 
-  const BaseNumberTextField(
-      {super.key, required ValueNotifier<String> baseNumber})
-      : _baseNumber = baseNumber;
+  const BaseNumberTextField({super.key, required this.baseNumber});
 
   @override
-  Widget build(BuildContext context) => TextFormField(
-        initialValue: _baseNumber.value,
-        validator: _validator,
-        decoration: const InputDecoration(labelText: '製品ロール№'),
-        onChanged: (value) => _baseNumber.value = value,
-      );
+  Widget build(BuildContext context) => InputDecorator(
+      decoration: const InputDecoration(labelText: '製品ロール№'),
+      child: Text(baseNumber.value));
+}
 
-  String? _validator(String? value) {
-    if (value == null || value.isEmpty) {
-      return '製品ロール№を入力してください';
+class BaseNumberDateInput extends StatelessWidget {
+  final ValueNotifier<DateTime> rollNumberBaseDate;
+
+  const BaseNumberDateInput({super.key, required this.rollNumberBaseDate});
+
+  Future<void> _selectDate(BuildContext context) async {
+    final last = DateTime.now().add(const Duration(days: 7));
+    final first = DateTime.now().subtract(const Duration(days: 1));
+    final DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: rollNumberBaseDate.value,
+        firstDate: first,
+        lastDate: last);
+    if (pickedDate != null && pickedDate != rollNumberBaseDate.value) {
+      rollNumberBaseDate.value = pickedDate;
     }
-    return null;
   }
-  //switch (value) { null || '' => '製品ロール№を入力してください', _ => null };
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder(
+      valueListenable: rollNumberBaseDate,
+      builder: (context, value, child) => IconButton(
+          onPressed: () => _selectDate(context),
+          icon: const Icon(Icons.calendar_today)));
 }
 
 class RollMaterialDropDownMenu extends StatelessWidget {

@@ -4,6 +4,7 @@ import 'package:open_file/open_file.dart';
 import 'package:slitter_app/extension/fp_iterable.dart';
 import 'package:slitter_app/model/packing_form.dart';
 import 'package:slitter_app/model/roll_material.dart';
+import 'package:slitter_app/model/roll_number.dart';
 import 'package:slitter_app/model/roll_width.dart';
 import 'package:slitter_app/report/pdf_report.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
@@ -19,7 +20,7 @@ const _productNameFontSize = 10.0;
 const _packingFormFontSize = 9.5;
 
 typedef MiniLabelPrintJob = ({
-  String baseNumber,
+  RollBaseNumber baseNumber,
   List<MiniLabelPrintJobItem> items,
 });
 
@@ -83,7 +84,7 @@ const _LabelLayoutConfig _labelLayoutConfig = (
   columnsPerPage: 4,
 );
 
-Future<void> showMiniLabels(String baseNumber, MiniLabelPrintJob job) async {
+Future<void> showMiniLabels(MiniLabelPrintJob job) async {
   final document = _createDocumentWithSetting();
   await _renderLabels(job, document);
 
@@ -211,7 +212,7 @@ Iterable<_LabelElements> _labelData(MiniLabelPrintJob job) {
   _LabelElements toElements(MiniLabelPrintJobItem item) => (
         productName: item.material.name,
         productWidth: item.width.value,
-        baseNumber: job.baseNumber,
+        baseNumber: job.baseNumber.value,
         packingForm: item.packingForm.name
       );
 
