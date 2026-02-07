@@ -10,6 +10,8 @@ dependencies:
   deep_pick: ^1.1.0
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   http: ^1.6.0
   intl: ^0.20.2
   open_file: ^3.5.4

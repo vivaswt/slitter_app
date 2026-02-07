@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:slitter_app/model/roll_number.dart';
-import 'package:slitter_app/repository/notion.dart';
 import 'package:slitter_app/model/mini_label_request.dart';
 import 'package:slitter_app/model/roll_material.dart';
 import 'package:slitter_app/model/packing_form.dart';
@@ -289,6 +288,7 @@ class BaseNumberDateInput extends StatelessWidget {
     final first = DateTime.now().subtract(const Duration(days: 1));
     final DateTime? pickedDate = await showDatePicker(
         context: context,
+        locale: const Locale("ja"),
         initialDate: rollNumberBaseDate.value,
         firstDate: first,
         lastDate: last);
