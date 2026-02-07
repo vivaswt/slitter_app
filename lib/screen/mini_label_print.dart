@@ -73,7 +73,7 @@ class MiniLabelPrintState extends State<MiniLabelPrint> {
                                   BaseNumberTextField(
                                       baseNumber:
                                           RollBaseNumber.fromDate(value)))
-                          .wrapWithExpanded(),
+                          .wrapWithSizedBox(width: 70),
                       BaseNumberDateInput(rollNumberBaseDate: _baseNumberDate)
                     ].wrapWithRow(),
                     MiniLabelPrintList(

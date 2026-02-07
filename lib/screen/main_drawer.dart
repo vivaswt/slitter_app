@@ -3,8 +3,6 @@ import 'package:slitter_app/extension/widget_wrap.dart';
 import 'package:slitter_app/screen/log.dart';
 import 'package:slitter_app/screen/mini_label_print.dart';
 import 'package:slitter_app/screen/setting.dart';
-import 'package:talker_flutter/talker_flutter.dart';
-import 'package:slitter_app/service/log.dart';
 
 class MainDrawer extends StatelessWidget {
   const MainDrawer({
