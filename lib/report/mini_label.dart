@@ -18,6 +18,7 @@ const _labelWidth = 164.0;
 const _baseFontSize = 11.0;
 const _productNameFontSize = 10.0;
 const _packingFormFontSize = 9.5;
+const _baseNumberFontSize = 12.0;
 
 typedef MiniLabelPrintJob = ({
   RollBaseNumber baseNumber,
@@ -68,10 +69,10 @@ const _LabelLayoutConfig _labelLayoutConfig = (
     fontSize: _baseFontSize
   ),
   baseNumber: (
-    offset: Offset(45.0, 48.0),
+    offset: Offset(42.0, 48.0),
     size: Size(42.5, 0.0),
     alignment: Alignment.left,
-    fontSize: _baseFontSize
+    fontSize: _baseNumberFontSize
   ),
   packingForm: (
     offset: Offset(0.0, 122.0),
