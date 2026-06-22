@@ -69,18 +69,7 @@ class SlitPatternList extends StatelessWidget {
 
               // --- 2. INPUT ROWS ---
               ..._formData.slitPatterns.map((item) => TableRow(children: [
-                    TextFormField(
-                        textAlign: TextAlign.right,
-                        keyboardType: TextInputType.number,
-                        onChanged: (value) => item.width = value,
-                        validator: (value) {
-                          if ((value ?? '').isNotEmpty &&
-                              int.tryParse(value!) == null) {
-                            return '数値を入力してください';
-                          }
-
-                          return null;
-                        }),
+                    WidthTextFormField(item: item),
                     SlitPatternCountDropDownMenu(
                       item: item,
                     )
@@ -104,6 +93,24 @@ class SlitPatternList extends StatelessWidget {
           .wrapWithContainer(
               constraints: const BoxConstraints(minWidth: 210),
               padding: const EdgeInsets.all(8));
+}
+
+class WidthTextFormField extends StatelessWidget {
+  final FormSlitPatternItem _item;
+
+  const WidthTextFormField({
+    super.key,
+    required FormSlitPatternItem item,
+  }) : _item = item;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+        textAlign: TextAlign.right,
+        keyboardType: TextInputType.number,
+        onChanged: (value) => _item.width = value,
+        validator: (_) => _item.validateWidth());
+  }
 }
 
 class BladeSetupAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -154,6 +161,7 @@ class SlitPatternCountDropDownMenu extends StatelessWidget {
         border: InputBorder.none,
       ),
       onSelected: (value) => item.count = value,
+      validator: (_) => item.validateCount(),
     );
   }
 }
@@ -187,21 +195,49 @@ class ClearPatternButton extends StatelessWidget {
 }
 
 class FormData {
-  final List<FormSlitPatternItem> slitPatterns;
+  late final List<FormSlitPatternItem> slitPatterns;
 
-  FormData({int patternCount = 0})
-      : slitPatterns = List.generate(
-            patternCount, (_) => FormSlitPatternItem(width: '', count: null));
+  FormData({int patternCount = 0}) {
+    slitPatterns = List.generate(
+        patternCount,
+        (i) => FormSlitPatternItem(
+            width: '',
+            count: null,
+            isRequired: () => _patternItemIsRequired(i)));
+  }
+  int get lastFilledLine =>
+      slitPatterns.lastIndexWhere((item) => !item.isEmpty);
 
-  int get lastFilledLine => slitPatterns
-      .lastIndexWhere((item) => item.width.isNotEmpty || item.count != null);
+  bool _patternItemIsRequired(int index) =>
+      index == 0 ? true : index <= lastFilledLine;
 }
 
 class FormSlitPatternItem {
   String width;
   int? count;
+  final bool Function() isRequired;
 
-  FormSlitPatternItem({required this.width, this.count});
+  FormSlitPatternItem(
+      {required this.width, this.count, required this.isRequired});
+
+  bool get isEmpty => width.isEmpty && count == null;
+
+  String? validateWidth() {
+    if (width.isEmpty && isRequired()) {
+      return '巾を入力してください';
+    }
+    if (width.isNotEmpty && int.tryParse(width) == null) {
+      return '数値を入力してください';
+    }
+    return null;
+  }
+
+  String? validateCount() {
+    if (count == null && isRequired()) {
+      return '本数を選択してください';
+    }
+    return null;
+  }
 }
 
 class SlitRequest {
