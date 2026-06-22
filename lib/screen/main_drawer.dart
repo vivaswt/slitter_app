@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slitter_app/extension/widget_wrap.dart';
+import 'package:slitter_app/screen/blade_setup.dart';
 import 'package:slitter_app/screen/log.dart';
 import 'package:slitter_app/screen/mini_label_print.dart';
 import 'package:slitter_app/screen/setting.dart';
@@ -25,6 +26,15 @@ class MainDrawer extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const MiniLabelPrint()));
         },
         leading: const Icon(Icons.label),
+      ),
+      ListTile(
+        title: const Text('セット替え'),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (_) => const BladeSetupScreen()));
+        },
+        leading: const Icon(Icons.cut),
       ),
       ListTile(
         title: const Text('設定'),

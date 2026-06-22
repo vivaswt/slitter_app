@@ -203,7 +203,8 @@ class MiniLabelPrintAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) => AppBar(
-        title: [const Icon(Icons.label), const Text('ミニラベル印刷')].wrapWithRow(),
+        title: [const Icon(Icons.label), const Text('ミニラベル印刷')]
+            .wrapWithRow(spacing: 8),
         actions: [
           IconButton(
             onPressed: onPrint,
